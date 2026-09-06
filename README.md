@@ -13,10 +13,6 @@
   <img src="https://img.shields.io/badge/UI-Streamlit-FF4B4B" alt="Streamlit">
 </p>
 
-<!-- [PAS ENCORE LIVRE] P1 :
-<p align="center"><img src="docs/demo.gif" width="720" alt="Démo : vérification d'un article dans le chat Streamlit"></p>
--->
-
 ---
 
 ## Le problème
@@ -105,11 +101,11 @@ ollama serve            # dans un terminal séparé
 
 uv sync
 
-python scripts/download_data.py   # [PAS ENCORE LIVRE] récupère Fake.csv / True.csv
+# Placer Fake.csv et True.csv (dataset Kaggle "Fake and real news") dans data/
 ```
 
-Alternative conteneurisée : `docker compose up` [PAS ENCORE LIVRE] (app + Ollama +
-modèle léger, pour une démo sans installation locale d'Ollama).
+Alternative conteneurisée : `docker compose up` lance les services `app` et `ollama`
+(voir `compose.yaml`) ; les modèles Ollama restent à télécharger.
 
 ## Utilisation
 
@@ -125,11 +121,11 @@ uv run python -m streamlit run app/app.py
 
 ## Résultats
 
-**Aucune évaluation chiffrée n'est publiée pour l'instant.** [PAS ENCORE LIVRE]
-L'indicateur de confiance actuel est heuristique (cohérence entre le label prédit et
-les étiquettes des voisins). Une évaluation sur un échantillon hold-out étiqueté
-(exactitude, matrice de confusion) sera versionnée dans `metrics/rag_eval.json`.
-Aucun chiffre n'est avancé ici tant que ce fichier n'existe pas.
+**Aucune évaluation chiffrée n'est publiée.** L'indicateur de confiance actuel est
+heuristique (cohérence entre le label prédit et les étiquettes des voisins
+récupérés). Une évaluation sur un échantillon hold-out étiqueté (exactitude, matrice
+de confusion) reste à faire. Aucun chiffre n'est avancé ici tant qu'elle n'existe
+pas.
 
 ## Limites connues
 
@@ -137,7 +133,7 @@ Aucun chiffre n'est avancé ici tant que ce fichier n'existe pas.
   base : un sujet totalement nouveau n'a pas de voisins pertinents.
 - Découpage par mots (pas par tokens du modèle d'embedding ni par phrases).
 - Dépendance forte à Ollama : embeddings et LLM en dépendent tous les deux.
-- Dataset non redistribué dans le dépôt (récupération par script).
+- Dataset non redistribué dans le dépôt (à récupérer sur Kaggle et placer dans `data/`).
 
 ## Améliorations futures
 
