@@ -1,204 +1,154 @@
-# Système de Détection de Fake News
+<h1 align="center">fake-news-detection</h1>
 
-![python](https://img.shields.io/badge/python-3.12-green)
-![ChromaDB](https://img.shields.io/badge/ChromaDB-1.2.1-blue)
-![Ollama](https://img.shields.io/badge/Ollama-0.6.0-white)
-![Streamlit](https://img.shields.io/badge/Streamlit-1.50-orange)
+<p align="center">
+  Système RAG local qui estime si un article de presse est fiable, en le comparant
+  par similarité sémantique à une base d'articles déjà vérifiés (vrais / faux),
+  puis en faisant trancher un LLM exécuté en local.
+</p>
 
-Un système sophistiqué RAG (Retrieval-Augmented Generation) pour détecter les fake news en comparant des articles à une base de données vérifiée utilisant la similarité sémantique et l'analyse par LLM local.
-
-## Aperçu du Projet
-
-Ce projet implémente un système alimenté par l'IA qui analyse des articles de presse pour déterminer leur véracité en les comparant à une base de données d'articles pré-vérifiés étiquetés "True" ou "Fake". Le système utilise ChromaDB pour le stockage vectoriel et Ollama pour l'inférence LLM locale.
-
-### Fonctionnalités Principales
-- **Pipeline de Traitement des Données** : Nettoie, découpe et vectorise les articles de presse
-- **Recherche Sémantique** : Trouve des articles similaires utilisant des embeddings vectoriels
-- **Analyse LLM** : Utilise des modèles locaux via Ollama pour la classification
-- **Interface Double** : Interface en ligne de commande et interface web Streamlit
-- **Exécution Locale** : Tous les modèles s'exécutent localement pour la confidentialité et le contrôle
-
-## Architecture du Système
-
-```
-fake-news-detection/
-├── app/                  # Interface web Streamlit
-├── chroma/               # Client ChromaDB et gestion
-├── data_handler/         # Utilitaire de chargement et nettoyage des données
-├── function_chunk/       # Fonctionnalité de découpage de texte
-├── pipelines/            # Pipeline principal de traitement des données
-├── prompt/               # Système RAG et construction de prompts
-└── tests/                # Suites de tests
-```
-
-## Démarrage Rapide
-
-### Prérequis
-
-- Python 3.12+
-- [Ollama](https://ollama.ai/) installé et fonctionnel
-- Modèles Ollama requis : `all-minilm:latest` et `phi3:3.8b`
-
-### Installation
-
-1. **Installer Ollama et les modèles requis :**
-```bash
-# Installer Ollama (suivre les instructions sur https://ollama.ai/)
-ollama pull all-minilm:latest
-ollama pull phi3:3.8b
-```
-
-2. **Démarrer le serveur Ollama :**
-```bash
-ollama serve
-```
-
-3. **Configurer l'environnement Python :**
-```bash
-# Utiliser uv
-uv sync
-```
-
-### Utilisation
-
-#### Interface Ligne de Commande
-
-```bash
-# Exploration des données
-uv run main.py -e
-
-# Traitement des données et insertion dans ChromaDB
-uv run main.py -i
-
-# Analyser un article de presse
-uv run main.py -r
-```
-
-#### Interface Web (Streamlit)
-
-```bash
-uv run python -m streamlit run app/app.py
-```
-
-## Configuration
-
-### Fichiers de Données
-Placer vos fichiers de dataset dans le répertoire `data/` :
-- `Fake.csv` - Articles étiquetés comme fake news
-- `True.csv` - Articles étiquetés comme vraies informations
-
-### Configuration des Modèles
-Le système utilise deux modèles Ollama :
-- **Modèle d'Embedding** : `all-minilm:latest` pour les embeddings vectoriels
-- **Modèle LLM** : `phi3:3.8b` pour la génération de texte et classification
-
-## Comment Ça Marche
-
-### 1. Pipeline de Traitement des Données
-- **Chargement** : Lit les fichiers CSV et les combine en un seul DataFrame
-- **Exploration** : Analyse la forme des données, les types et les valeurs manquantes
-- **Nettoyage** : Supprime les balises HTML, URLs, caractères spéciaux et normalise le texte
-- **Découpage** : Divise les articles en morceaux avec chevauchement pour une meilleure récupération
-
-### 2. Stockage Vectoriel
-- **Génération d'Embeddings** : Crée des embeddings vectoriels pour chaque morceau de texte
-- **Intégration ChromaDB** : Stocke les vecteurs avec métadonnées dans une base de données persistante
-- **Normalisation** : Applique la normalisation L2 aux vecteurs pour une meilleure recherche de similarité
-
-### 3. Système RAG
-- **Traitement des Requêtes** : Vectorise l'entrée utilisateur et trouve des articles similaires
-- **Construction du Contexte** : Construit le contexte du prompt à partir des articles récupérés
-- **Classification** : Utilise le LLM pour analyser l'article et fournir un verdict True/Fake avec justification
-
-## Détails Techniques
-
-### Composants Principaux
-
-- **ChromaClient** : Classe singleton gérant les connexions ChromaDB
-- **DataHandler** : Gère le chargement, l'exploration et le nettoyage des données
-- **Pipeline** : Orchestre le flux de travail complet du traitement des données
-- **RAGSystem** : Implémente le pipeline de génération augmentée par récupération
-- **PromptBuilder** : Construit les prompts LLM avec contexte pertinent
-
-### Traitement du Texte
-- Décodage des entités HTML et suppression des balises
-- Suppression des URLs et caractères spéciaux
-- Normalisation des espaces et mise en minuscules
-- Découpage du texte avec chevauchement configurable
-
-## Tests
-
-Exécuter la suite de tests pour vérifier tous les composants :
-
-```bash
-# Exécuter tous les tests
-uv run pytest tests/
-
-# Exécuter des modules de test spécifiques
-uv run pytest tests/test_data_cleaner.py
-
-uv run pytest tests/test_split_chunk.py
-
-uv run pytest tests/test_prompt_builder.py
-```
-
-## Considérations de Performance
-
-- **Taille des Morceaux** : Ajuster les paramètres `step` et `overlap` dans `chroma_manager.py` pour une récupération optimale
-- **Traitement par Lots** : Les grands datasets sont traités par lots de taille configurable
-- **Normalisation Vectorielle** : Améliore la précision de la recherche de similarité
-- **Sélection des Modèles** : Équilibre entre précision et vitesse d'inférence
-
-## Évaluation
-
-Le système peut être évalué sur :
-- **Précision de Classification** : Comparaison des verdicts LLM avec les labels réels
-- **Qualité de Récupération** : Précision et rappel de la récupération d'articles similaires
-- **Cohérence des Réponses** : Qualité des justifications fournies par le LLM
-
-## Contribution
-
-1. Forker le repository
-2. Créer une branche de fonctionnalité
-3. Ajouter des tests pour les nouvelles fonctionnalités
-4. S'assurer que tous les tests passent
-5. Soumettre une pull request
-
-## Licence
-Ce projet n'est pas sous licence open-source.  
-Il a été développé dans le cadre d’un projet d'étude et est destiné à un usage éducatif uniquement.  
-Toute réutilisation ou diffusion du code nécessite l’accord préalable de l’auteur.
-
-## Auteurs
-**Équipe de développement**
-- Matthis - Nabil - Loïc : Développement principal
-
-**Supervision**
-
-- Nadège - Maxime
-
-## Dépannage
-
-### Problèmes Courants
-
-1. **Erreurs de Connexion Ollama**
-   - Vérifier que `ollama serve` est en cours d'exécution
-   - Vérifier que les modèles sont téléchargés avec `ollama list`
-
-2. **Persistance ChromaDB**
-   - Vérifier les permissions d'écriture dans `./chroma_db/`
-   - Vider le répertoire de la base de données en cas de problèmes de migration
-
-3. **Problèmes de Mémoire**
-   - Réduire la taille des lots dans `ChromaManager.add_dataframe_to_collection()`
-   - Utiliser des modèles d'embedding plus petits si nécessaire
-
-### Obtenir de l'Aide
-
-- Consulter les fichiers de test pour des exemples d'utilisation
-- Revoir la documentation ChromaDB pour les opérations de base de données vectorielles
-- Consulter la documentation Ollama pour la gestion des modèles
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12-blue" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/vector%20store-ChromaDB-4B32C3" alt="ChromaDB">
+  <img src="https://img.shields.io/badge/LLM-Ollama%20(phi3)-black" alt="Ollama">
+  <img src="https://img.shields.io/badge/UI-Streamlit-FF4B4B" alt="Streamlit">
+</p>
 
 ---
 
-*Construit à des fins éducatives en développement IA et applications NLP.*
+## Le problème
+
+Face à un article douteux, une question simple : ressemble-t-il, sur le fond et le
+ton, à des articles déjà établis comme vrais, ou à des articles déjà établis comme
+faux ? Le formuler en système : indexer une base d'articles étiquetés, retrouver
+les plus proches d'un texte soumis, et demander à un modèle de langage de conclure
+en s'appuyant sur ces exemples.
+
+## La solution
+
+Une chaîne RAG (Retrieval-Augmented Generation) qui tourne **entièrement en local**
+(confidentialité, pas d'API tierce) :
+
+- **Chargement et nettoyage** : lecture de `data/Fake.csv` et `data/True.csv`,
+  fusion, nettoyage du texte (HTML, URLs, ponctuation, casse) dans
+  `data_handler/text_cleaning.py`.
+- **Découpage** : `function_chunk/split_chunk.py` découpe chaque article en
+  fragments à recouvrement (fenêtre glissante sur les mots).
+- **Indexation** : `chroma/chroma_manager.py` calcule les embeddings via Ollama
+  (`all-minilm`), les normalise (L2) et les insère par lots de 500 dans une
+  collection ChromaDB persistante, avec les métadonnées (sujet, date, étiquette).
+- **Récupération** : pour un texte soumis, `RAGSystem.analyze_article` interroge
+  ChromaDB (`n_results=10`) pour les fragments les plus proches.
+- **Prompt et décision** : `prompt/prompt_builder.py` construit un contexte à partir
+  des fragments récupérés et un prompt de classification, envoyé au LLM local
+  (`phi3:3.8b` via Ollama). La réponse attendue est `Label: "True"/"Fake"` +
+  justification courte.
+- **Post-traitement** : `prompt/rag_system.py` extrait l'étiquette par expression
+  régulière et calcule un indicateur de confiance à partir de la cohérence entre le
+  label prédit et les étiquettes des voisins récupérés.
+- **Interfaces** : une CLI interactive (`main.py`, `questionary`) et un chat
+  Streamlit (`app/app.py`).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    A["Fake.csv / True.csv"] --> B["nettoyage<br/>text_cleaning"]
+    B --> C["découpage en fragments<br/>split_chunk"]
+    C --> D["embeddings Ollama all-minilm<br/>+ normalisation L2"]
+    D --> E["ChromaDB<br/>collection persistante"]
+    F["Article à vérifier"] --> G["récupération top-10<br/>ChromaDB"]
+    E --> G
+    G --> H["PromptBuilder<br/>contexte + prompt"]
+    H --> I["LLM local phi3:3.8b<br/>via Ollama"]
+    I --> J["label True/Fake<br/>+ justification + confiance"]
+```
+
+```
+fake-news-detection/
+|- data_handler/     chargement CSV, nettoyage de texte
+|- function_chunk/   découpage en fragments
+|- chroma/           client (singleton), manager, requêtes
+|- prompt/           PromptBuilder, RAGSystem
+|- pipelines/        orchestration (Pipeline)
+|- app/              interface Streamlit
+|- tests/
+|- main.py           CLI (flags -e / -i / -r)
+\- pyproject.toml
+```
+
+## Stack technique
+
+| Domaine | Outils |
+|---|---|
+| Base vectorielle | ChromaDB (client persistant) |
+| Embeddings | Ollama `all-minilm` |
+| LLM | Ollama `phi3:3.8b` (exécution locale) |
+| Données | pandas, dataset Kaggle "Fake and real news" |
+| CLI / UI | questionary, Streamlit |
+| Packaging | `uv`, `pyproject.toml`, Docker |
+
+## Installation
+
+Prérequis : **Python 3.12+**, [`uv`](https://docs.astral.sh/uv/),
+[Ollama](https://ollama.com/) en service.
+
+```bash
+git clone <url-du-repo> && cd fake-news-detection
+
+ollama pull all-minilm:latest
+ollama pull phi3:3.8b
+ollama serve            # dans un terminal séparé
+
+uv sync
+
+# Placer Fake.csv et True.csv (dataset Kaggle "Fake and real news") dans data/
+```
+
+Alternative conteneurisée : `docker compose up` lance les services `app` et `ollama`
+(voir `compose.yaml`) ; les modèles Ollama restent à télécharger.
+
+## Utilisation
+
+```bash
+# CLI
+uv run main.py -e        # exploration des données
+uv run main.py -i        # nettoyage, découpage, insertion dans ChromaDB
+uv run main.py -r        # coller un article, obtenir label + justification
+
+# Interface web
+uv run python -m streamlit run app/app.py
+```
+
+## Résultats
+
+**Aucune évaluation chiffrée n'est publiée.** L'indicateur de confiance actuel est
+heuristique (cohérence entre le label prédit et les étiquettes des voisins
+récupérés). Une évaluation sur un échantillon hold-out étiqueté (exactitude, matrice
+de confusion) reste à faire. Aucun chiffre n'est avancé ici tant qu'elle n'existe
+pas.
+
+## Limites connues
+
+- La démarche suppose que le sujet de l'article soumis est déjà représenté dans la
+  base : un sujet totalement nouveau n'a pas de voisins pertinents.
+- Découpage par mots (pas par tokens du modèle d'embedding ni par phrases).
+- Dépendance forte à Ollama : embeddings et LLM en dépendent tous les deux.
+- Dataset non redistribué dans le dépôt (à récupérer sur Kaggle et placer dans `data/`).
+
+## Améliorations futures
+
+- Évaluation quantitative sur hold-out ; remplacer l'indicateur de confiance
+  heuristique par une métrique mesurée.
+- Découpage par tokens ; comparaison de plusieurs tailles de fragment.
+- Garde-fou "hors base" quand la distance au plus proche voisin dépasse un seuil.
+
+## Ce que ce projet démontre
+
+Conception d'une chaîne RAG de bout en bout (indexation, récupération, génération) ;
+usage d'une base vectorielle (ChromaDB, embeddings, normalisation, insertion par
+lots) ; exécution de LLM en local (Ollama) ; ingénierie de prompt à partir d'un
+contexte récupéré.
+
+## Licence
+
+Distribué sous licence MIT. Voir le fichier [LICENSE](LICENSE).

@@ -1,49 +1,45 @@
-from unittest.mock import patch
-
 import pandas as pd
-from data_handler.data_handler import DataHandler
+
+from data_handler.text_cleaning import text_cleaning
 
 
 def create_mock_dataset():
     data = {
         "title": ["Title 1", "Title 2", "Title 3"],
         "text": [
-            "Fake News : Aliens landind on Earth !",
+            "Fake News : Aliens landing on Earth !",
             "Donald Trump is a first super genius !",
-            "Alibaba and the 40 thiefs !",
+            "Alibaba and the 40 thieves !",
         ],
-        "label": ["False", "False", "True"],
+        "label": ["fake", "fake", "true"],
     }
-
-    df = pd.DataFrame(data)
-    return df
+    return pd.DataFrame(data)
 
 
 def test_mock_dataset_structure():
     df = create_mock_dataset()
-
-    # Vérifie si c'est un DF
     assert isinstance(df, pd.DataFrame)
-    # Vérifie les colonnes
     assert set(df.columns) == {"title", "text", "label"}
-    # Vérifie le nombre de lignes
     assert len(df) == 3
 
 
-def text_mock_dataset_content_not_null():
+def test_mock_dataset_labels_are_valid():
     df = create_mock_dataset()
-    # Vérifie que toutes les colonnes existent
-    for col in ["title", "text", "label"]:
-        assert col in df.columns
-    # Vérifie que les labels sont valides
-    assert all(label in ["True", "Fake"] for label in df["label"] if label != "")
+    assert set(df["label"].unique()) <= {"fake", "true"}
 
 
-def text_cleaning_on_mock_data():
-    df = create_mock_dataset()
+def test_text_cleaning_removes_html_and_urls():
+    raw = 'Visit <a href="http://example.com">this link</a> &amp; more at www.test.org !'
+    cleaned = text_cleaning(raw)
+    assert "<" not in cleaned and ">" not in cleaned
+    assert "http" not in cleaned and "www" not in cleaned
+    assert "&amp;" not in cleaned
 
-    with patch("pandas.read_csv", return_value=df):
-        handler = DataHandler(csv_path="test.csv")
-        handler.load().clean()
 
-    assert all("<" not in c and "http" not in c for c in handler.clean_df["text"])
+def test_text_cleaning_lowercases_and_strips_specials():
+    cleaned = text_cleaning("  Hello,  WORLD!!!  #Fake @News  ")
+    assert cleaned == "hello world fake news"
+
+
+def test_text_cleaning_normalizes_whitespace():
+    assert text_cleaning("a\n\nb\t c   d") == "a b c d"
